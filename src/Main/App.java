@@ -44,10 +44,15 @@ public class App {
         contentPane.setLayout(new CardLayout());
 
         EventPanel eventPanel = new EventPanel(contentPane);
+        eventPanel.setPreferredSize(new Dimension(600, 100));
+        eventPanel.setMaximumSize(eventPanel.getPreferredSize());
+        eventPanel.setMinimumSize(eventPanel.getPreferredSize());
         ResultsPanel resultsPanel = new ResultsPanel(contentPane);
 
-        contentPane.add(eventPanel, "event-manager");
         contentPane.add(resultsPanel, "results-page");
+        contentPane.add(eventPanel, "event-manager");
+
+        contentPane.setSize(new Dimension(1920, 1080));
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(infoPanel, BorderLayout.NORTH);
@@ -55,15 +60,15 @@ public class App {
 
         JButton save = new JButton("save");
         JButton load = new JButton("load");
-        JButton eventManager = new JButton("Event Manager");
         JButton resultsManager = new JButton("Results Manager");
+        JButton eventManager = new JButton("Event Manager");
 
         JToolBar toolBar = new JToolBar("Tools");
 
         toolBar.add(save);
         toolBar.add(load);
-        toolBar.add(eventManager);
         toolBar.add(resultsManager);
+        toolBar.add(eventManager);
 
         JFrame frame = new JFrame();
         frame.setTitle("SCOUT - v " + version);

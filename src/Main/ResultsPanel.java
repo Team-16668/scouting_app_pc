@@ -24,7 +24,7 @@ class ResultsPanel extends JPanel
     {
         contentPane = panel;
         setOpaque(true);
-        setBackground(Color.RED.darker().darker());
+        setBackground(new Color(245, 127, 38));
 
         //Create the Input Table
         String[][] inputData = {
@@ -100,9 +100,12 @@ class ResultsPanel extends JPanel
         outputPanel.add(outputScrollPane, BorderLayout.CENTER);
         outputPanel.add(outputControlPanel, BorderLayout.SOUTH);
 
-        homeSplitPane =
-                new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, inputPanel, outputPanel);
+        homeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, inputPanel, outputPanel);
         homeSplitPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        homeSplitPane.setPreferredSize(new Dimension(1800, 950));
+        homeSplitPane.setMaximumSize(homeSplitPane.getPreferredSize());
+        homeSplitPane.setMinimumSize(homeSplitPane.getPreferredSize());
+        homeSplitPane.setResizeWeight(0.5d);
 
         add(homeSplitPane);
 
@@ -157,6 +160,11 @@ class ResultsPanel extends JPanel
             }
         });
     }
+    @Override
+    public Dimension getPreferredSize()
+    {
+        return (new Dimension(1920, 1080));
+    }
 
     public String[][] sortHighestToLowest(String[][] array) {
         boolean sorted = false;
@@ -173,11 +181,5 @@ class ResultsPanel extends JPanel
         }
 
         return array;
-    }
-
-    @Override
-    public Dimension getPreferredSize()
-    {
-        return (new Dimension(500, 500));
     }
 }
