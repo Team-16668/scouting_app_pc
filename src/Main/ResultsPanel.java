@@ -50,7 +50,6 @@ class ResultsPanel extends JPanel
         inputControlPanel.add(addRow);
         inputControlPanel.add(removeRow);
 
-
         JLabel inputLabel = new JLabel("Input Data");
         inputLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -102,9 +101,7 @@ class ResultsPanel extends JPanel
 
         homeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, inputPanel, outputPanel);
         homeSplitPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        homeSplitPane.setPreferredSize(new Dimension(1800, 950));
-        homeSplitPane.setMaximumSize(homeSplitPane.getPreferredSize());
-        homeSplitPane.setMinimumSize(homeSplitPane.getPreferredSize());
+        homeSplitPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         homeSplitPane.setResizeWeight(0.5d);
 
         add(homeSplitPane);

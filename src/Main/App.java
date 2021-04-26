@@ -8,10 +8,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
@@ -25,6 +22,8 @@ public class App {
     private String info = "FTC Scouting App created by Team 16668 \n" +
             "Note: \n" +
             "Currently in Beta \n";
+
+    private boolean writeTeams = true;
 
     public App() {
         JTextArea infoTextArea = new JTextArea();
@@ -49,8 +48,8 @@ public class App {
         eventPanel.setMinimumSize(eventPanel.getPreferredSize());
         ResultsPanel resultsPanel = new ResultsPanel(contentPane);
 
-        contentPane.add(resultsPanel, "results-page");
         contentPane.add(eventPanel, "event-manager");
+        contentPane.add(resultsPanel, "results-page");
 
         contentPane.setSize(new Dimension(1920, 1080));
 
@@ -80,6 +79,43 @@ public class App {
         frame.setLocationRelativeTo(null);
         frame.setResizable(true);
         frame.setVisible(true);
+
+        JTextArea warning = new JTextArea();
+        warning.setAlignmentX(Component.CENTER_ALIGNMENT);
+        warning.setText("There is already a file for teams in this directory. Do you want to overwrite it?");
+        warning.setEditable(false);
+        warning.setLineWrap(true);
+        warning.setWrapStyleWord(true);
+        warning.setBackground(new Color(241,241,241));
+
+        JPanel warningPanel = new JPanel();
+        warningPanel.add(warning);
+
+        JButton yes = new JButton();
+        yes.setText("Yes");
+
+        JButton no = new JButton();
+        no.setText("No");
+
+        JPanel warningControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        warningControlPanel.add(yes);
+        warningControlPanel.add(no);
+
+        JFrame warningFrame = new JFrame();
+        warningFrame.setTitle("Warning!");
+        warningFrame.setLayout(new BorderLayout());
+        warningFrame.add(warningControlPanel, BorderLayout.SOUTH);
+        warningFrame.add(warning, BorderLayout.NORTH);
+        warningFrame.setPreferredSize(new Dimension(400,
+                150
+        ));
+        warningFrame.setMinimumSize(warningFrame.getPreferredSize());
+        warningFrame.setMaximumSize(warningFrame.getPreferredSize());
+        warningFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        warningFrame.setLocationRelativeTo(null);
+        warningFrame.setResizable(false);
+        warningFrame.setVisible(false);
+        warningFrame.setEnabled(false);
 
         resultsPanel.homeSplitPane.setDividerLocation(frame.getWidth() / 2);
 
@@ -124,6 +160,58 @@ public class App {
                 }
             }
         });
+
+        eventPanel.saveTeams.addActionListener((e) -> {
+            if(eventPanel.dir.getText() != "No File Location Selected") {
+                try {
+                    File myObj = new File(eventPanel.dir.getText() + "\\teams.txt");
+                    if (myObj.createNewFile()) {
+                        System.out.println("File created: " + myObj.getName());
+                    } else {
+                        warningFrame.setVisible(true);
+                        warningFrame.setEnabled(true);
+                        frame.setEnabled(false);
+                    }
+                } catch (IOException a) {
+                    System.out.println("An error occurred.");
+                    a.printStackTrace();
+                }
+                if (writeTeams) {
+                    try {
+                        BufferedWriter outputWriter = null;
+                        outputWriter = new BufferedWriter(new FileWriter(eventPanel.dir.getText() + "\\teams.txt"));
+                        for (int i = 0; i < eventPanel.teamTable.getRowCount(); i++) {
+                            outputWriter.write(((String) eventPanel.teamTable.getValueAt(i, 0)) + "-" +
+                                    ((String) eventPanel.teamTable.getValueAt(i, 1)));
+                            if(i != eventPanel.teamTable.getRowCount() - 1) {
+                                outputWriter.newLine();
+                            }
+                        }
+                        outputWriter.flush();
+                        outputWriter.close();
+                    } catch (IOException a) {
+                        System.out.println("An error occurred.");
+                        a.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        yes.addActionListener((e) -> {
+            writeTeams = true;
+            warningFrame.setVisible(false);
+            warningFrame.setEnabled(false);
+            frame.setEnabled(true);
+        });
+
+        no.addActionListener((e) -> {
+            writeTeams = false;
+            warningFrame.setVisible(false);
+            warningFrame.setEnabled(false);
+            frame.setEnabled(true);
+        });
+
+
 
     }
 

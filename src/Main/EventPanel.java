@@ -3,17 +3,17 @@ package Main;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
+import java.io.*;
 
 class EventPanel extends JPanel
 {
-    private JTextField filename = new JTextField(), dir = new JTextField();
+    public JTextField dir = new JTextField();
 
     private JPanel contentPane;
     private JComboBox choiceBox;
     public JButton saveTeams, loadTeams;
+    public JTable teamTable;
+    public String[] teamColumnNames;
 
     public EventPanel(JPanel panel)
     {
@@ -29,51 +29,47 @@ class EventPanel extends JPanel
         };
 
         // Column Names
-        String[] teamColumnNames = { "Team #", "Team Name"};
+        teamColumnNames = new String[]{"Team #", "Team Name"};
 
         // Initializing the JTable
 
-        JTable teamTable = new JTable(new DefaultTableModel(teamData, teamColumnNames));
+        teamTable = new JTable(new DefaultTableModel(teamData, teamColumnNames));
 
         JScrollPane teamScrollPane = new JScrollPane(teamTable);
 
         //The control panel below the input stuff
         JButton addTeam = new JButton("Add Team");
         JButton removeTeam = new JButton("Remove Team");
+        JButton chooseLocation = new JButton("Select File Location");
         saveTeams = new JButton("Save Teams");
         loadTeams = new JButton("Load Teams");
 
-        JPanel teamControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        teamControlPanel.add(addTeam);
-        teamControlPanel.add(removeTeam);
-        teamControlPanel.add(saveTeams);
-        teamControlPanel.add(loadTeams);
-
-        JLabel teamLabel = new JLabel("Teams");
-        teamLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        filename = new JTextField();
-        filename.setEditable(false);
-        filename.setPreferredSize(new Dimension(200, 50));
-        filename.setMinimumSize(filename.getPreferredSize());
-        filename.setMaximumSize(filename.getPreferredSize());
-
         dir = new JTextField();
         dir.setEditable(false);
+        dir.setText("No File Location Selected");
         dir.setPreferredSize(new Dimension(200, 50));
         dir.setMaximumSize(dir.getPreferredSize());
         dir.setMinimumSize(dir.getPreferredSize());
 
-        JTable fileTable = new JTable();
+        JPanel teamControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        teamControlPanel.add(addTeam);
+        teamControlPanel.add(removeTeam);
+        teamControlPanel.add(chooseLocation);
 
+        JPanel teamControlPanel2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        teamControlPanel2.add(dir);
+        teamControlPanel2.add(saveTeams);
+        teamControlPanel2.add(loadTeams);
+
+        JLabel teamLabel = new JLabel("Teams");
+        teamLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel teamPanel = new JPanel();
         teamPanel.setLayout(new BoxLayout(teamPanel, BoxLayout.PAGE_AXIS));
         teamPanel.add(teamLabel);
         teamPanel.add(teamScrollPane);
         teamPanel.add(teamControlPanel);
-        teamPanel.add(filename);
-        teamPanel.add(dir);
+        teamPanel.add(teamControlPanel2);
 
         //Create the Match Table
         String[][] matchData = {
@@ -110,10 +106,7 @@ class EventPanel extends JPanel
 
         JSplitPane eventSplitPane =
                 new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, teamPanel, matchPanel);
-        eventSplitPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        eventSplitPane.setPreferredSize(new Dimension(1800, 950));
-        eventSplitPane.setMaximumSize(eventSplitPane.getPreferredSize());
-        eventSplitPane.setMinimumSize(eventSplitPane.getPreferredSize());
+        eventSplitPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         eventSplitPane.setResizeWeight(0.5d);
 
         add(eventSplitPane);
@@ -128,7 +121,7 @@ class EventPanel extends JPanel
             teamModel.removeRow(teamModel.getRowCount()-1);
         });
 
-        saveTeams.addActionListener((e) -> {
+        chooseLocation.addActionListener((e) -> {
             JFileChooser c = new JFileChooser();
             c.setPreferredSize(new Dimension(800, 600));
             c.setMaximumSize(c.getPreferredSize());
@@ -136,13 +129,47 @@ class EventPanel extends JPanel
             // Demonstrate "Save" dialog:
             int rVal = c.showSaveDialog(EventPanel.this);
             if (rVal == JFileChooser.APPROVE_OPTION) {
-                filename.setText(c.getSelectedFile().getName());
                 dir.setText(c.getCurrentDirectory().toString());
+                System.out.println(dir.getText());
             }
             if (rVal == JFileChooser.CANCEL_OPTION) {
-                filename.setText("You pressed cancel");
-                dir.setText("");
+
+            }
+        });
+
+        loadTeams.addActionListener((e) -> {
+            BufferedReader reader;
+            try {
+                DefaultTableModel teamModel = (DefaultTableModel) teamTable.getModel();
+                reader = new BufferedReader(new FileReader(
+                        dir.getText() + "\\teams.txt"
+                ));
+                int lines = 0;
+                String line = reader.readLine();
+                while(line != null) {
+                    String name = line.substring(line.indexOf("-")+1);
+                    if(teamModel.getRowCount() > lines)  {
+                        teamModel.setValueAt(line.substring(0, line.indexOf("-")), lines, 0);
+                        teamModel.setValueAt(name, lines, 1);
+                    } else {
+                        teamModel.addRow(new String[]{line.substring(0, line.indexOf("-")),
+                                name});
+                    }
+                    
+                    System.out.println(line);
+                    line = reader.readLine();
+                    lines++;
+                }
+                
+                reader.close();
+                teamTable = new JTable(teamModel);
+                //setTeamTable(teamModel);
+            } catch(IOException o) {
+                o.printStackTrace();
             }
         });
     }
+
+    public void setTeamTable(DefaultTableModel model) {teamTable = new JTable(model); }
+
 }
