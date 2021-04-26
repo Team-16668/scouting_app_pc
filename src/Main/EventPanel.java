@@ -1,7 +1,10 @@
 package Main;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.text.TableView;
 import java.awt.*;
 import java.io.*;
 
@@ -11,9 +14,11 @@ class EventPanel extends JPanel
 
     private JPanel contentPane;
     private JComboBox choiceBox;
-    public JButton saveTeams, loadTeams;
-    public JTable teamTable;
+    public JButton saveTeams, loadTeams, saveMatches, loadMatches;
+    public JTable teamTable, matchTable;
     public String[] teamColumnNames;
+    public TableCellEditor originalEditor;
+    public JPanel fileControlPanel;
 
     public EventPanel(JPanel panel)
     {
@@ -54,46 +59,62 @@ class EventPanel extends JPanel
         JPanel teamControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         teamControlPanel.add(addTeam);
         teamControlPanel.add(removeTeam);
-        teamControlPanel.add(chooseLocation);
 
-        JPanel teamControlPanel2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        teamControlPanel2.add(dir);
-        teamControlPanel2.add(saveTeams);
-        teamControlPanel2.add(loadTeams);
+        fileControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        fileControlPanel.add(chooseLocation);
+        fileControlPanel.add(dir);
+        fileControlPanel.add(saveTeams);
+        fileControlPanel.add(loadTeams);
 
         JLabel teamLabel = new JLabel("Teams");
         teamLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel teamPanel = new JPanel();
-        teamPanel.setLayout(new BoxLayout(teamPanel, BoxLayout.PAGE_AXIS));
-        teamPanel.add(teamLabel);
-        teamPanel.add(teamScrollPane);
-        teamPanel.add(teamControlPanel);
-        teamPanel.add(teamControlPanel2);
+        teamPanel.setLayout(new BorderLayout());
+        teamPanel.add(teamLabel, BorderLayout.NORTH);
+        teamPanel.add(teamScrollPane, BorderLayout.CENTER);
+        teamPanel.add(teamControlPanel, BorderLayout.SOUTH);
 
-        //Create the Match Table
-        String[][] matchData = {
-                { "16668", "250", "45" },
-                { "11115", "2000", "95" },
-                { "8393", "350", "120" },
-        };
+        //Match Data
 
-        // Column Names
+        DefaultTableModel ml = new DefaultTableModel(1,5);
+        matchTable = new JTable( ml );
+
         String[] matchColumnNames = { "Team #", "TeleOp Score", "Endgame Score"};
 
-        // Initializing the JTable
+        matchTable.getColumnModel().getColumn(0).setHeaderValue("Match");
+        matchTable.getColumnModel().getColumn(1).setHeaderValue("Red 1");
+        matchTable.getColumnModel().getColumn(2).setHeaderValue("Red 2");
+        matchTable.getColumnModel().getColumn(3).setHeaderValue("Blue 1");
+        matchTable.getColumnModel().getColumn(4).setHeaderValue("Blue 2");
 
-        JTable matchTable = new JTable(new DefaultTableModel(matchData, matchColumnNames));
+        JComboBox teams = new JComboBox(new Object[]{"team 1", "team 2", "team 3"});
+        teams.setEditable(false);
+        teams.removeAllItems();
+        for(int i=0; i< teamTable.getModel().getRowCount(); i++) {
+            teams.addItem(teamTable.getModel().getValueAt(i, 0));
+        }
+
+        matchTable.getModel().setValueAt("Match 1", 0, 0);
+        originalEditor = matchTable.getColumnModel().getColumn(1).getCellEditor();
+        matchTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(teams));
+        matchTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(teams));
+        matchTable.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(teams));
+        matchTable.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(teams));
 
         JScrollPane matchScrollPane = new JScrollPane(matchTable);
 
         //The control panel below the input stuff
         JButton addMatch = new JButton("Add Match");
         JButton removeMatch = new JButton("Remove Match");
+        saveMatches = new JButton("Save Matches");
+        loadMatches = new JButton("Load Matches");
 
         JPanel matchControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         matchControlPanel.add(addMatch);
         matchControlPanel.add(removeMatch);
+        matchControlPanel.add(saveMatches);
+        matchControlPanel.add(loadMatches);
 
         JLabel matchLabel = new JLabel("Matches");
         matchLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -109,7 +130,10 @@ class EventPanel extends JPanel
         eventSplitPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         eventSplitPane.setResizeWeight(0.5d);
 
-        add(eventSplitPane);
+        setLayout(new BorderLayout());
+
+        add(eventSplitPane, BorderLayout.CENTER);
+        add(fileControlPanel, BorderLayout.SOUTH);
 
         addTeam.addActionListener((e) -> {
             DefaultTableModel teamModel = (DefaultTableModel) teamTable.getModel();
@@ -155,21 +179,114 @@ class EventPanel extends JPanel
                         teamModel.addRow(new String[]{line.substring(0, line.indexOf("-")),
                                 name});
                     }
-                    
+
                     System.out.println(line);
                     line = reader.readLine();
                     lines++;
                 }
-                
+
                 reader.close();
                 teamTable = new JTable(teamModel);
                 //setTeamTable(teamModel);
             } catch(IOException o) {
                 o.printStackTrace();
             }
+            teams.removeAllItems();
+            for(int i=0; i< teamTable.getModel().getRowCount(); i++) {
+                teams.addItem(teamTable.getModel().getValueAt(i, 0));
+            }
         });
-    }
 
-    public void setTeamTable(DefaultTableModel model) {teamTable = new JTable(model); }
+        loadMatches.addActionListener((e) -> {
+            BufferedReader reader;
+            try {
+                DefaultTableModel matchModel = (DefaultTableModel) matchTable.getModel();
+                reader = new BufferedReader(new FileReader(
+                        dir.getText() + "\\matches.txt"
+                ));
+                int lines = 0;
+                String line = reader.readLine();
+                while(line != null) {
+                    String name = line.substring(line.indexOf("-")+1);
+                    String[] info = new String[5];
+                    int lastChar = 0;
+                    for(int i = 0; i<5; i++) {
+                        if (i == 0) {
+                            info[i] = line.substring(0, line.indexOf(","));
+                            lastChar = line.indexOf(",");
+                        } else if(i!=4){
+                            info[i] = line.substring(lastChar+1, line.indexOf(",",lastChar+1));
+                            lastChar = line.indexOf(",", lastChar+1);
+                        }else {
+                            info[i] = line.substring(lastChar+1);
+                        }
+                    }
+                    if(matchModel.getRowCount() > lines)  {
+                        matchModel.setValueAt(info[0], lines, 0);
+                        matchModel.setValueAt(info[1], lines, 1);
+                        matchModel.setValueAt(info[2], lines, 2);
+                        matchModel.setValueAt(info[3], lines, 3);
+                        matchModel.setValueAt(info[4], lines, 4);
+                    } else {
+                        matchModel.addRow(new String[]{info[0],info[1],info[2],info[3],info[4],});
+                    }
+
+                    System.out.println(line);
+                    line = reader.readLine();
+                    lines++;
+                }
+
+                reader.close();
+            } catch(IOException o) {
+                o.printStackTrace();
+            }
+            teams.removeAllItems();
+            for(int i=0; i< teamTable.getModel().getRowCount(); i++) {
+                teams.addItem(teamTable.getModel().getValueAt(i, 0));
+            }
+        });
+
+        addMatch.addActionListener((e) -> {
+
+            DefaultTableModel matchModel = (DefaultTableModel) matchTable.getModel();
+            String newMatch = "Match " + ((matchModel.getRowCount()) + 1);
+            System.out.println(newMatch);
+
+
+            matchTable.getColumnModel().getColumn(1).setCellEditor(originalEditor);
+            matchTable.getColumnModel().getColumn(2).setCellEditor(originalEditor);
+            matchTable.getColumnModel().getColumn(3).setCellEditor(originalEditor);
+            matchTable.getColumnModel().getColumn(4).setCellEditor(originalEditor);
+
+            matchModel.addRow(new String[]{newMatch, "", "", "", ""});
+
+            matchTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(teams));
+            matchTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(teams));
+            matchTable.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(teams));
+            matchTable.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(teams));
+
+
+        });
+
+        removeMatch.addActionListener((e) -> {
+            DefaultTableModel matchModel = (DefaultTableModel) matchTable.getModel();
+            String newMatch = "Match " + ((matchModel.getRowCount()) + 1);
+            System.out.println(newMatch);
+
+
+            matchTable.getColumnModel().getColumn(1).setCellEditor(originalEditor);
+            matchTable.getColumnModel().getColumn(2).setCellEditor(originalEditor);
+            matchTable.getColumnModel().getColumn(3).setCellEditor(originalEditor);
+            matchTable.getColumnModel().getColumn(4).setCellEditor(originalEditor);
+
+            matchModel.removeRow(matchModel.getRowCount()-1);
+
+            matchTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(teams));
+            matchTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(teams));
+            matchTable.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(teams));
+            matchTable.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(teams));
+        });
+
+    }
 
 }

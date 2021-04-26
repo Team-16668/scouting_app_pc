@@ -1,17 +1,9 @@
 package Main;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.*;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Created by jb on 4/24/21.
@@ -23,7 +15,7 @@ public class App {
             "Note: \n" +
             "Currently in Beta \n";
 
-    private boolean writeTeams = true;
+    private boolean writeValues = true;
 
     public App() {
         JTextArea infoTextArea = new JTextArea();
@@ -87,6 +79,11 @@ public class App {
         warning.setLineWrap(true);
         warning.setWrapStyleWord(true);
         warning.setBackground(new Color(241,241,241));
+        frame.setPreferredSize(new Dimension(1000,
+                600
+        ));
+        frame.setMinimumSize(frame.getPreferredSize());
+        frame.setMaximumSize(frame.getPreferredSize());
 
         JPanel warningPanel = new JPanel();
         warningPanel.add(warning);
@@ -176,7 +173,7 @@ public class App {
                     System.out.println("An error occurred.");
                     a.printStackTrace();
                 }
-                if (writeTeams) {
+                if (writeValues) {
                     try {
                         BufferedWriter outputWriter = null;
                         outputWriter = new BufferedWriter(new FileWriter(eventPanel.dir.getText() + "\\teams.txt"));
@@ -197,15 +194,55 @@ public class App {
             }
         });
 
+        eventPanel.saveMatches.addActionListener((e) -> {
+            if(eventPanel.dir.getText() != "No File Location Selected") {
+                writeValues = true;
+                try {
+                    File myObj = new File(eventPanel.dir.getText() + "\\matches.txt");
+                    if (myObj.createNewFile()) {
+                        System.out.println("File created: " + myObj.getName());
+                    } else {
+                        warningFrame.setVisible(true);
+                        warningFrame.setEnabled(true);
+                        frame.setEnabled(false);
+                    }
+                } catch (IOException a) {
+                    System.out.println("An error occurred.");
+                    a.printStackTrace();
+                }
+                if (writeValues) {
+                    try {
+                        BufferedWriter outputWriter = null;
+                        outputWriter = new BufferedWriter(new FileWriter(eventPanel.dir.getText() + "\\matches.txt"));
+                        for (int i = 0; i < eventPanel.matchTable.getRowCount(); i++) {
+                            outputWriter.write(((String) eventPanel.matchTable.getValueAt(i, 0)) + "," +
+                                    ((String) eventPanel.matchTable.getValueAt(i, 1)) + "," +
+                                    ((String) eventPanel.matchTable.getValueAt(i, 2)) + "," +
+                                    ((String) eventPanel.matchTable.getValueAt(i, 3)) + "," +
+                                    ((String) eventPanel.matchTable.getValueAt(i, 4)));
+                            if(i != eventPanel.teamTable.getRowCount() - 1) {
+                                outputWriter.newLine();
+                            }
+                        }
+                        outputWriter.flush();
+                        outputWriter.close();
+                    } catch (IOException a) {
+                        System.out.println("An error occurred.");
+                        a.printStackTrace();
+                    }
+                }
+            }
+        });
+
         yes.addActionListener((e) -> {
-            writeTeams = true;
+            writeValues = true;
             warningFrame.setVisible(false);
             warningFrame.setEnabled(false);
             frame.setEnabled(true);
         });
 
         no.addActionListener((e) -> {
-            writeTeams = false;
+            writeValues = false;
             warningFrame.setVisible(false);
             warningFrame.setEnabled(false);
             frame.setEnabled(true);
