@@ -1,10 +1,7 @@
 package Main;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.text.TableView;
 import java.awt.*;
 import java.io.*;
 
@@ -14,11 +11,9 @@ class EventPanel extends JPanel
 
     private JPanel contentPane;
     private JComboBox choiceBox;
-    public JButton saveTeams, loadTeams, saveMatches, loadMatches;
+    public JButton saveTeams, loadTeams;
     public JTable teamTable;
     public String[] teamColumnNames;
-    public TableCellEditor originalEditor;
-    public JPanel fileControlPanel;
 
     public EventPanel(JPanel panel)
     {
@@ -59,62 +54,46 @@ class EventPanel extends JPanel
         JPanel teamControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         teamControlPanel.add(addTeam);
         teamControlPanel.add(removeTeam);
+        teamControlPanel.add(chooseLocation);
 
-        fileControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        fileControlPanel.add(chooseLocation);
-        fileControlPanel.add(dir);
-        fileControlPanel.add(saveTeams);
-        fileControlPanel.add(loadTeams);
+        JPanel teamControlPanel2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        teamControlPanel2.add(dir);
+        teamControlPanel2.add(saveTeams);
+        teamControlPanel2.add(loadTeams);
 
         JLabel teamLabel = new JLabel("Teams");
         teamLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel teamPanel = new JPanel();
-        teamPanel.setLayout(new BorderLayout());
-        teamPanel.add(teamLabel, BorderLayout.NORTH);
-        teamPanel.add(teamScrollPane, BorderLayout.CENTER);
-        teamPanel.add(teamControlPanel, BorderLayout.SOUTH);
+        teamPanel.setLayout(new BoxLayout(teamPanel, BoxLayout.PAGE_AXIS));
+        teamPanel.add(teamLabel);
+        teamPanel.add(teamScrollPane);
+        teamPanel.add(teamControlPanel);
+        teamPanel.add(teamControlPanel2);
 
-        //Match Data
+        //Create the Match Table
+        String[][] matchData = {
+                { "16668", "250", "45" },
+                { "11115", "2000", "95" },
+                { "8393", "350", "120" },
+        };
 
-        DefaultTableModel ml = new DefaultTableModel(1,5);
-        JTable matchTable = new JTable( ml );
-
+        // Column Names
         String[] matchColumnNames = { "Team #", "TeleOp Score", "Endgame Score"};
 
-        matchTable.getColumnModel().getColumn(0).setHeaderValue("Match");
-        matchTable.getColumnModel().getColumn(1).setHeaderValue("Red 1");
-        matchTable.getColumnModel().getColumn(2).setHeaderValue("Red 2");
-        matchTable.getColumnModel().getColumn(3).setHeaderValue("Blue 1");
-        matchTable.getColumnModel().getColumn(4).setHeaderValue("Blue 2");
+        // Initializing the JTable
 
-        JComboBox teams = new JComboBox(new Object[]{"team 1", "team 2", "team 3"});
-        teams.setEditable(false);
-        teams.removeAllItems();
-        for(int i=0; i< teamTable.getModel().getRowCount(); i++) {
-            teams.addItem(teamTable.getModel().getValueAt(i, 0));
-        }
-
-        matchTable.getModel().setValueAt("Match 1", 0, 0);
-        originalEditor = matchTable.getColumnModel().getColumn(1).getCellEditor();
-        matchTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(teams));
-        matchTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(teams));
-        matchTable.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(teams));
-        matchTable.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(teams));
+        JTable matchTable = new JTable(new DefaultTableModel(matchData, matchColumnNames));
 
         JScrollPane matchScrollPane = new JScrollPane(matchTable);
 
         //The control panel below the input stuff
         JButton addMatch = new JButton("Add Match");
         JButton removeMatch = new JButton("Remove Match");
-        saveMatches = new JButton("Save Matches");
-        loadMatches = new JButton("Load Matches");
 
         JPanel matchControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         matchControlPanel.add(addMatch);
         matchControlPanel.add(removeMatch);
-        matchControlPanel.add(saveMatches);
-        matchControlPanel.add(loadMatches);
 
         JLabel matchLabel = new JLabel("Matches");
         matchLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -130,10 +109,7 @@ class EventPanel extends JPanel
         eventSplitPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         eventSplitPane.setResizeWeight(0.5d);
 
-        setLayout(new BorderLayout());
-
-        add(eventSplitPane, BorderLayout.CENTER);
-        add(fileControlPanel, BorderLayout.SOUTH);
+        add(eventSplitPane);
 
         addTeam.addActionListener((e) -> {
             DefaultTableModel teamModel = (DefaultTableModel) teamTable.getModel();
@@ -191,36 +167,6 @@ class EventPanel extends JPanel
             } catch(IOException o) {
                 o.printStackTrace();
             }
-            teams.removeAllItems();
-            for(int i=0; i< teamTable.getModel().getRowCount(); i++) {
-                teams.addItem(teamTable.getModel().getValueAt(i, 0));
-            }
-        });
-
-        addMatch.addActionListener((e) -> {
-
-            DefaultTableModel matchModel = (DefaultTableModel) matchTable.getModel();
-            String newMatch = "Match " + ((matchModel.getRowCount()) + 1);
-            System.out.println(newMatch);
-
-
-            matchTable.getColumnModel().getColumn(1).setCellEditor(originalEditor);
-            matchTable.getColumnModel().getColumn(2).setCellEditor(originalEditor);
-            matchTable.getColumnModel().getColumn(3).setCellEditor(originalEditor);
-            matchTable.getColumnModel().getColumn(4).setCellEditor(originalEditor);
-
-            matchModel.addRow(new String[]{newMatch, "", "", "", ""});
-
-            matchTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(teams));
-            matchTable.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(teams));
-            matchTable.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(teams));
-            matchTable.getColumnModel().getColumn(4).setCellEditor(new DefaultCellEditor(teams));
-
-
-        });
-
-        saveMatches.addActionListener((e) -> {
-
         });
     }
 
